@@ -3,9 +3,11 @@
 #include <tuple>
 
 #define en 10
-#define intMax 999999
+#define intMax 9999999
 
 using namespace std;
+
+tuple <int*, int>wydajReszteZachlanny(int* nominaly, int* ileNom, int reszta, int n);
 
 tuple <int*, int>wydajReszteDynamiczny(int* banknoty, int reszta, int x, int _size,int* _b) {
     // banknoty- {0 1 1 1 4 4 4 9 9 9}, reszta - 8, x - 3 (ilość różnych monet), _size - ilość monet + 1, b- {1 4 5}
@@ -95,11 +97,11 @@ Banknoty/Reszta
     {
         pom[i] = 0;
     }
-
     int i = row - 1,j= col - 1, p = 0;
+
     if (e == intMax) {                  // Jeżeli ostatnie pole tablicy zawiera wartość intMax to oznacza, że nie można wydać reszty.
-        cout << "Reszta jest niemozliwa do wydania. " << endl;
-        return make_tuple(new int[3]{ 0,0,0 }, NULL);
+        cout << "Reszta jest niemozliwa do wydania." << endl;
+        return make_tuple(wynik, NULL);
     }
     else {
         while (e != 0) {              // Dopóki wartość e nie dojdzie do 0 (reszty równej 0 )
@@ -125,14 +127,14 @@ Banknoty/Reszta
     }
 
     // Wyświetlanie tablicy z resztami
-    for (int i = 0; i < row; i++)
-    {
-        for (int j = 0; j < col; j++)
-        {
-            cout << tab[i][j] << " ";
-        }
-        cout << endl;
-    }
+  // for (int i = 0; i < row; i++)
+  // {
+  //     for (int j = 0; j < col; j++)
+  //     {
+  //         cout << tab[i][j] << " ";
+  //     }
+  //     cout << endl;
+  // }
     return make_tuple(wynik, minBank);
 }
 
@@ -189,15 +191,17 @@ int main() {
 
     int size = sizeFunc(c, n); // Ilość wszystkich monet + 1
 
+   //////////////////////////////////////////////////////////   Dynamiczny   //////////////////////////////////////////////////
+
     int* banknotyTab = new int[size];  // Tablica ze wszystkim banknotami uporządkowanymi niemalejąco 0 1 1 1 4 4 4 5 5 5
     banknotyTab = banknoty(b, c, n, size);
                                               // Wszystkie banknoty|reszta do  wydania| ilość różnych banknotów | ilość wszystkich banknotów| wartości monet
     tie(wyntab, lBank) = wydajReszteDynamiczny(banknotyTab, reszta, n, size,b); // Jakie banknoty zostały użyte i ile
 
     save << lBank << endl;
-    cout << "\nReszta: " << reszta << endl;
-    cout << "Minimalna liczba monet potrzebna do wydania reszty: " << lBank << endl;
-    cout << "Banknoty: " << endl;
+    cout << "Reszta: " << reszta << endl;
+    cout << "Algorytm dynamiczny\n" <<"Ilosc monet-> " << lBank << endl;
+
     for (int i = 0; i < n; i++)
     {
         cout << b[i] << " ";
@@ -208,6 +212,68 @@ int main() {
         cout << wyntab[i] << " ";
         save << wyntab[i] << " ";
     }
+    //////////////////////////////////////////////////////////   Zachłanny //////////////////////////////////////////////////
+
+   int lBank2; // ilość banktotów potrzebna do wydania reszty
+   int* wyntab2 = new int[n];  //jakie banknoty zawierają się w reszcie
+   
+   tie(wyntab2, lBank2) = wydajReszteZachlanny(b, c, reszta, n);
+   cout << endl;
+        //save << lBank << endl;
+   cout <<"Algorytm zachlanny \n" <<"Ilosc monet-> " << lBank2  << endl;;
+
+   for (int i = 0; i < n; i++)
+   {
+       cout << b[i] << " ";
+   }
+   cout << endl;
+   for (int i = 0; i < n; i++)
+   {
+       cout << wyntab2[i] << " ";
+      // save << wyntab[i] << " ";
+   }
     save.close();
 
+}
+tuple <int*, int>wydajReszteZachlanny(int* nominaly, int* ileNom, int reszta, int n) {
+
+    int* tab = new int[n];
+    for (int i = 0; i < n; i++)
+    {
+        tab[i] = 0;  // tablica zawierająca informacje o liczbie użytych nominałów na i-tej pozycji
+    }
+    int ileBank = 0;
+    int wartosc = 0;
+    int d;
+    for (size_t i = 0; i < n; i++)
+    {
+        d = ileNom[i];
+        for (int j = 0; j < d; j++)
+        {
+            wartosc += nominaly[i];
+        }    
+    }
+
+    if (reszta > wartosc) {
+        cout<<"\nReszta niemozliwa do wydania."<<endl;
+        return make_tuple(new int,NULL);
+    }
+
+    for (int i = n - 1; i >= 0; i--) {
+        int ile = reszta / nominaly[i];     // ile razy największa z monet zmieści się w reszcie do wydania
+        if (ile > 0) {
+            if (ile <= ileNom[i]) {            // sprawdzenie ile razy największy obecnie nominał zawrze się w reszcie
+                reszta -= ile * nominaly[i];   
+                tab[i] = ile;
+                ileBank += ile;
+            }
+            else {
+                reszta -= ileNom[i] * nominaly[i];
+                tab[i] = ileNom[i];
+                ileBank += ileNom[i];
+            }
+            if (reszta == 0) break;
+        }
+    }
+    return make_tuple(tab, ileBank);
 }
